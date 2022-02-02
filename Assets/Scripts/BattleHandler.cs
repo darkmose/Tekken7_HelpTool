@@ -59,6 +59,8 @@ public class BattleHandler : MonoBehaviour
     {
         _firstPlayer.Win();
         _secondPlayer.Win();
+        _firstPlayer.CurrentCharacter.WinCount++;
+        _secondPlayer.CurrentCharacter.WinCount++;
         _onEndBattleEvent.winner = _firstPlayer;
         _onEndBattleEvent.loser = _secondPlayer;
         _onEndBattleEvent.isDraw = true;
@@ -137,6 +139,8 @@ public class BattleHandler : MonoBehaviour
         for (int i = 0; i < character.WinCount; i++)
         {
             var v = ObjectPooler.GetPooledGameObject("V");
+            v.transform.localScale = Vector3.one;
+
             if (i < character.PerfectCount)
             {
                 v.transform.localScale = Vector3.one * 1.5f;

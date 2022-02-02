@@ -4,8 +4,10 @@ using UnityEngine;
 
 public class Player
 {
+    private const int MaximumWaveCount = 25;
     private List<Character> _charactersList = new List<Character>();
     public int CharactersCount => _charactersList.Count;
+    public int TournamentWave { get; private set; }
     public string Name { get; set; }
     public int Index { get; set; }
     public int WinCount { get; private set; }
@@ -57,13 +59,21 @@ public class Player
     {
         return _charactersList.Find(data => data.Index == index);
     }
+    
+    private List<Character> ValidCharactersList { get; set; }
 
     public void RandomSetCurrentCharacter()
     {
-        var randVal = Random.Range(0, _charactersList.Count);
-        CurrentCharacter = _charactersList[randVal];
-        if (CurrentCharacter.IsDroppedOut)
+        var wave = 1;
+        ValidCharactersList = _charactersList.FindAll(character => character.WinCount <= wave && !character.IsDroppedOut);
+        if (ValidCharactersList.Count != 0)
         {
+            var randVal = Random.Range(0, _charactersList.Count);
+            CurrentCharacter = _charactersList[randVal];
+        }
+        else
+        {
+
             for (int i = CurrentCharacter.Index + 1; i < CharactersCount; i++)
             {
 
@@ -72,12 +82,30 @@ public class Player
                     CurrentCharacter = _charactersList[i];
                     break;
                 }
-                if (i == CharactersCount -1 && !IsLoseGame)
+                if (i == CharactersCount - 1 && !IsLoseGame)
                 {
                     i = 0;
                 }
             }
+            
         }
+    }
+
+    public void CheckForTournamentWave() 
+    {
+        if (IsLoseGame)
+        {
+            return;
+        }
+        for (int i = 0; i < MaximumWaveCount; i++)
+        {
+            var chars = _charactersList.FindAll(charr => !charr.IsDroppedOut && charr.WinCount == i);
+            if (chars.Count != 0)
+            {
+                TournamentWave = i;
+            }
+        }
+        TournamentWave = 1;
     }
 
     public void CheckForLoseGame() 
