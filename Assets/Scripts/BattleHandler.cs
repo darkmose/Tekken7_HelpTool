@@ -3,7 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using GameEvents;
+using SoftEvents;
+using System.Text;
 
 public class BattleHandler : MonoBehaviour
 {
@@ -15,18 +16,22 @@ public class BattleHandler : MonoBehaviour
     [SerializeField] private Button _secondPlayerWin;
     [SerializeField] private Text _firstPlayerName;
     [SerializeField] private Text _secondPlayerName;
-    [SerializeField] private CharsElementHandler _firstPlayerElement;
-    [SerializeField] private CharsElementHandler _secondPlayerElement;
+    [SerializeField] private CharacterUIElement _firstPlayerElement;
+    [SerializeField] private CharacterUIElement _secondPlayerElement;
     [SerializeField] private Button _startBattleButton;
     [SerializeField] private Button _nextBattleButton;
     [SerializeField] private GameObject _battlePanel;
     [SerializeField] private Button _firstPerfectButton;
     [SerializeField] private Button _secondPerfectButton;
     [SerializeField] private Button _drawWinButton;
+    [SerializeField] private Text _leaderBoardText;
+    [SerializeField] private GameObject _leaderBoardPanel;
+    [SerializeField] private Button _leaderBoardCloseButton;
     private Player _firstPlayer;
     private Player _secondPlayer;
 
     private OnEndBattleEvent _onEndBattleEvent = new OnEndBattleEvent();
+    private OnEndGameEvent _onEndGameEvent = new OnEndGameEvent();
 
     private int _battleIndex = 0;
     private bool isFirstCircle = true;
@@ -41,6 +46,23 @@ public class BattleHandler : MonoBehaviour
         _drawWinButton.onClick.AddListener(OnDrawWinButton);
         _firstPerfectButton.onClick.AddListener(OnFirstPerfectButtonClickHandler);
         _secondPerfectButton.onClick.AddListener(OnSecondPerfectButtonClickHandler);
+        _leaderBoardCloseButton.onClick.AddListener(OnLeaderboardCloseButtonClickHandler);
+        EventsAgregator.Subscribe<OnEndBattleEvent>(EndBattleHandler);
+    }
+
+    private void OnLeaderboardCloseButtonClickHandler()
+    {
+        PlayersHandler.BackLosePlayerInList();
+        TabsSwitcher.SetBattleTabInteractable(false);
+        TabsSwitcher.SwitchTab(1);
+        _leaderBoardPanel.SetActive(false);
+    }
+
+    private void EndBattleHandler(object sender, OnEndBattleEvent data)
+    {
+        _battlePanel.SetActive(false);
+        data.loser.CheckForLoseGame();
+        NextBattle();
     }
 
     private void OnSecondPerfectButtonClickHandler()
@@ -55,7 +77,7 @@ public class BattleHandler : MonoBehaviour
         _firstPlayer.CurrentCharacter.PerfectCount++;
     }
 
-    private void OnDrawWinButton()
+    private void OnDrawWinButton() //Draw - ничья
     {
         _firstPlayer.Win();
         _secondPlayer.Win();
@@ -65,7 +87,6 @@ public class BattleHandler : MonoBehaviour
         _onEndBattleEvent.loser = _secondPlayer;
         _onEndBattleEvent.isDraw = true;
         EventsAgregator.Post<OnEndBattleEvent>(this, _onEndBattleEvent);
-        EndBattle();
     }
 
     private void Start()
@@ -85,7 +106,7 @@ public class BattleHandler : MonoBehaviour
             _battlePanel.SetActive(true);
             if (isFirstCircle)
             {
-                PrepareFirstCirclePlayers();
+                PrepareOneByOnePlayers();
             }
             PrepareCharsToFight();
             RefreshBattleWindow();
@@ -99,16 +120,16 @@ public class BattleHandler : MonoBehaviour
 
     private void NextBattle() 
     {                    
-        if (isFirstCircle)
+        if (isFirstCircle && PlayersHandler.PlayersCount > 2)
         {
-            PrepareFirstCirclePlayers();
+            PrepareOneByOnePlayers();
             PrepareCharsToFight();
             RefreshBattleWindow();
             _battlePanel.SetActive(true);
         }
         else
         {
-            PrepareSecondCirclePlayers();
+            PrepareOneThroughOnePlayers();
             PrepareCharsToFight();
             RefreshBattleWindow();
             _battlePanel.SetActive(true);
@@ -130,23 +151,14 @@ public class BattleHandler : MonoBehaviour
         RefreshUIElement(_secondPlayerElement, _secondPlayer.CurrentCharacter);
     }
 
-    private void RefreshUIElement(CharsElementHandler charsElementHandler, Character character) 
+    private void RefreshUIElement(CharacterUIElement characterUIElement, Character character) 
     {
-        charsElementHandler.charImage.sprite = character.CharacterSprite;
-        charsElementHandler.deadImage.enabled = character.IsDroppedOut;
-        charsElementHandler.indexText.text = $"{character.Index + 1}.";
-
-        for (int i = 0; i < character.WinCount; i++)
-        {
-            var v = ObjectPooler.GetPooledGameObject("V");
-            v.transform.localScale = Vector3.one;
-
-            if (i < character.PerfectCount)
-            {
-                v.transform.localScale = Vector3.one * 1.5f;
-            }
-            v.transform.SetParent(charsElementHandler.winCountTransform);
-        }
+        characterUIElement.SetIndex(character.Index + 1)
+            .SetCharImage(character.CharacterSprite)
+            .SetDead(character.IsDroppedOut)
+            .ClearWinCount()
+            .AddPerfectWin(character.PerfectCount)
+            .AddWin(character.WinCount - character.PerfectCount); //Кол-во побед включает в себя и победы Perfect
     }
 
 
@@ -159,7 +171,6 @@ public class BattleHandler : MonoBehaviour
         _onEndBattleEvent.winner = _firstPlayer;
         _onEndBattleEvent.loser = _secondPlayer;
         EventsAgregator.Post<OnEndBattleEvent>(this, _onEndBattleEvent);
-        EndBattle();
     }
 
 
@@ -173,28 +184,20 @@ public class BattleHandler : MonoBehaviour
         _onEndBattleEvent.winner = _secondPlayer;
         _onEndBattleEvent.loser = _firstPlayer;
         EventsAgregator.Post<OnEndBattleEvent>(this, _onEndBattleEvent);
-        EndBattle();
     }
 
-    private void EndBattle() 
-    {
-        _nextBattleButton.gameObject.SetActive(true);
-        _battlePanel.SetActive(false);
-        _firstPlayer.CheckForLoseGame();
-        _secondPlayer.CheckForLoseGame();
-    }
 
     private void OnBattleToggleClickHandler(bool value)
     {
         _battleCanvas.enabled = value;
     }
 
-    private void PrepareFirstCirclePlayers() 
+    private void PrepareOneByOnePlayers() 
     {
-        if (PlayersHandler.PlayersCount > MinimumPlayersCount)
+        if (PlayersHandler.PlayersCount > 1)
         {
             _firstPlayer = PlayersHandler.GetPlayerOfIndex(_battleIndex);
-            if (_firstPlayer.Index < PlayerRegister.PlayersRegistered - 1)
+            if (_firstPlayer.Index < PlayersHandler.PlayersCount - 1)
             {
                 _secondPlayer = PlayersHandler.GetPlayerOfIndex(_firstPlayer.Index + 1);
                 _battleIndex++;
@@ -206,13 +209,35 @@ public class BattleHandler : MonoBehaviour
                 _battleIndex = 0;
             }
         }
+        else
+        {
+            Debug.Log($"Победитель: {PlayersHandler.GetPlayerOfIndex(0).Name}");
+            _onEndGameEvent.Winner = PlayersHandler.GetPlayerOfIndex(0);
+            ShowLeaderBoard(_onEndGameEvent.Winner);
+            EventsAgregator.Post<OnEndGameEvent>(this, _onEndGameEvent);
+        }
     }
-    private void PrepareSecondCirclePlayers() 
+
+    private void ShowLeaderBoard(Player winner) 
+    {
+        var result = new StringBuilder();
+        result.Append("1. " + winner.Name +"\n");
+        int i = 2;
+        foreach (var player in PlayersHandler.LosePlayers)
+        {
+            result.Append((i++).ToString() + ". " + player.Name + "\n");
+        }
+
+        _leaderBoardText.text = result.ToString();
+        _leaderBoardPanel.SetActive(true);
+    }
+
+    private void PrepareOneThroughOnePlayers() 
     {
         if (PlayersHandler.PlayersCount > MinimumPlayersCount)
         {
             _firstPlayer = PlayersHandler.GetPlayerOfIndex(_battleIndex);
-            if (_firstPlayer.Index < PlayerRegister.PlayersRegistered - 2)
+            if (_firstPlayer.Index < PlayersHandler.PlayersCount - 2)
             {
                 _secondPlayer = PlayersHandler.GetPlayerOfIndex(_firstPlayer.Index + 2);
                 _battleIndex++;
@@ -221,9 +246,14 @@ public class BattleHandler : MonoBehaviour
             {
                 isFirstCircle = true;
                 _battleIndex = 0;
-
-                PrepareFirstCirclePlayers();
+                PrepareOneByOnePlayers();
             }
+        }
+        else
+        {
+            _battleIndex = 0;
+            isFirstCircle = true;
+            PrepareOneByOnePlayers();
         }
 
     }

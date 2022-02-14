@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using GameEvents;
+using SoftEvents;
 using System;
 using UnityEngine.UI;
 
@@ -26,6 +26,8 @@ public class PlayersProfiles : MonoBehaviour
     private int _charactersCount = 0;
     private Player _currentPlayer;
     private OnStartGenerateCharsEvent _onStartGenerateChars = new OnStartGenerateCharsEvent();
+    private Character[] _remainingCharacters;
+    private Character _currentRemainCharacter;
     public static int CharactersPerPlayer => innerInstance._charactersCount / PlayerRegister.PlayersRegistered;
     private void Awake()
     {
@@ -35,6 +37,7 @@ public class PlayersProfiles : MonoBehaviour
         }
         _currentPlayer = new Player("Unknown", -1);
         EventsAgregator.Subscribe<OnPlayerWasAddedEvent>(OnPlayerWasAddedHandler);
+        EventsAgregator.Subscribe<OnEndBattleEvent>(EndBattleHandler);
         _leftArrowButton.onClick.AddListener(OnLeftArrowButtonClickHandler);
         _rightArrowButton.onClick.AddListener(OnRightArrowButtonClickHandler);
         _generateCharactersButton.onClick.AddListener(OnGenerateCharactersButtonClickHandler);
@@ -43,6 +46,7 @@ public class PlayersProfiles : MonoBehaviour
         _generateCharactersButton.gameObject.SetActive(false);
     }
 
+
     private void Start()
     {
         ClearScrollView();
@@ -50,21 +54,55 @@ public class PlayersProfiles : MonoBehaviour
         PrepareCharactersCount();
     }
 
-    private void NextCharacter()
+    private void ShowRemainingCharactersPanel()
     {
-        if (_currentPlayer != null)
+        CharactersCollection.RemainCharactersInfo();
+        _remainingCharacters = CharactersCollection.TakeRemainingCharacters();
+        if (_remainingCharacters.Length > 0)
         {
-            _currentPlayer.NextCharacter();
-            _characterCheckoutImage.sprite = _currentPlayer.CurrentCharacter.CharacterSprite;
+            _currentRemainCharacter = _remainingCharacters[0];
+            _characterCheckoutPanel.SetActive(true);
+            _characterCheckoutImage.sprite = _currentRemainCharacter.CharacterSprite;
         }
     }
-    private void PrevCharacter()
+
+    private void EndBattleHandler(object sender, OnEndBattleEvent data)
     {
-        if (_currentPlayer != null)
+        RefreshStats();
+        RefreshScrollview();
+    }
+
+    private void NextRemainCharacter()
+    {
+        if (_currentRemainCharacter.Index < _remainingCharacters.Length-1)
         {
-            _currentPlayer.PrevCharacter();
-            _characterCheckoutImage.sprite = _currentPlayer.CurrentCharacter.CharacterSprite;
+            var nextIndex = _currentRemainCharacter.Index + 1;
+            _currentRemainCharacter = _remainingCharacters[nextIndex];
+            _characterCheckoutImage.sprite = _currentRemainCharacter.CharacterSprite;
         }
+        else
+        {
+            var index = 0;
+            _currentRemainCharacter = _remainingCharacters[index];
+            _characterCheckoutImage.sprite = _currentRemainCharacter.CharacterSprite;
+        }
+
+    }
+    private void PrevRemainCharacter()
+    {
+        if (_currentRemainCharacter.Index > 0)
+        {
+            var prevIndex = _currentRemainCharacter.Index - 1;
+            _currentRemainCharacter = _remainingCharacters[prevIndex];
+            _characterCheckoutImage.sprite = _currentRemainCharacter.CharacterSprite;
+        }
+        else
+        {
+            var index = _remainingCharacters.Length - 1;
+            _currentRemainCharacter = _remainingCharacters[index];
+            _characterCheckoutImage.sprite = _currentRemainCharacter.CharacterSprite;
+        }
+
     }
 
     private void NextPlayer()
@@ -161,12 +199,12 @@ public class PlayersProfiles : MonoBehaviour
 
     private void OnDownArrowButtonClickHandler()
     {
-        NextCharacter();
+        NextRemainCharacter();
     }
 
     private void OnUpArrowButtonClickHandler()
     {
-        PrevCharacter();
+        PrevRemainCharacter();
     }
 
     private void PrepareCharactersCount()
@@ -177,9 +215,9 @@ public class PlayersProfiles : MonoBehaviour
     private void RefreshStats() 
     {
         _playerNameText.text = _currentPlayer.Name;
-        _winCountText.text = $"Побед: {_currentPlayer.WinCount}";
-        _loseCountText.text = $"Поражений: {_currentPlayer.LoseCount}";
-        _winRateText.text = $"WinRate: {_currentPlayer.WinRate} %";
+        _winCountText.text = $"Win: {_currentPlayer.WinCount}";
+        _loseCountText.text = $"Lose: {_currentPlayer.LoseCount}";
+        _winRateText.text = $"WinRate: {(_currentPlayer.WinRate * 100f).ToString("0.0")} %";
     }
 
     private void ClearScrollView() 
@@ -199,54 +237,55 @@ public class PlayersProfiles : MonoBehaviour
 
         for (int i = 0; i < _currentPlayer.CharactersCount; i++)
         {
+            _contentRoot.localPosition = Vector3.zero;
             var character = _currentPlayer.GetCharacterOfIndex(i);
             var element = ObjectPooler.GetPooledGameObject(PooledElementObjectName);
             element.transform.SetParent(_contentRoot);
             element.transform.localScale = Vector3.one;
             element.name = character.Name;
 
-            if (element.TryGetComponent(out CharsElementHandler charsElementHandler))
+            if (element.TryGetComponent(out CharacterUIElement charsElementHandler))
             {
-                RefreshElement(character, charsElementHandler);
+                RefreshUIElement(character, charsElementHandler);
             }
         }
+    }
 
-
+    private void MakeWelcomeSound() 
+    {
+        AudioManager.PlaySound("WelcomeSound");
     }
 
     private void OnGenerateCharactersButtonClickHandler()
     {
         if (PlayerRegister.PlayersRegistered > 0)
         {
+            MakeWelcomeSound();
             for (int i = 0; i < CharactersPerPlayer; i++)
             {
                 var character = CharactersCollection.TakeRandomChar();
                 _currentPlayer.AddCharacter(character);
             }
-            _characterCheckoutPanel.SetActive(true);
-            _characterCheckoutImage.sprite = _currentPlayer.GetCharacterOfIndex(0).CharacterSprite;
             RefreshScrollview();
             _generateCharactersButton.gameObject.SetActive(false);
 
             EventsAgregator.Post<OnStartGenerateCharsEvent>(this, _onStartGenerateChars);
+
+            if (PlayersHandler.CheckAllPlayersWithCharacters()) 
+            {
+                ShowRemainingCharactersPanel();
+            }
         }
     }
 
-    private static void RefreshElement(Character character, CharsElementHandler charsElementHandler)
+    private void RefreshUIElement(Character character, CharacterUIElement characterUIElement)
     {
-        charsElementHandler.charImage.sprite = character.CharacterSprite;
-        charsElementHandler.deadImage.enabled = character.IsDroppedOut;
-        charsElementHandler.indexText.text = $"{character.Index + 1}.";       
-        
-        for (int i = 0; i < character.WinCount; i++)
-        {
-            var v = ObjectPooler.GetPooledGameObject("V");
-            if (i < character.PerfectCount)
-            {
-                v.transform.localScale = Vector3.one * 1.5f;
-            }
-            v.transform.SetParent(charsElementHandler.winCountTransform);
-        }
+        characterUIElement.SetIndex(character.Index + 1)
+            .SetCharImage(character.CharacterSprite)
+            .SetDead(character.IsDroppedOut)
+            .ClearWinCount()
+            .AddPerfectWin(character.PerfectCount)
+            .AddWin(character.WinCount - character.PerfectCount); //Кол-во побед включает в себя и победы Perfect
     }
 
     private void OnPlayerWasAddedHandler(object sender, OnPlayerWasAddedEvent data)

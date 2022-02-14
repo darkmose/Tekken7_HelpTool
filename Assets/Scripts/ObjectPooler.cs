@@ -5,10 +5,11 @@ using UnityEngine;
 
 public class ObjectPooler : MonoBehaviour
 { 
-    public static ObjectPooler instance;
+    private static ObjectPooler instance;
     [SerializeField] private Transform rootOfPooledGameobjects;
     private Dictionary<string, Queue<GameObject>> poolDictionary;
     [SerializeField] private List<Pool> pools;
+    public static Transform PooledObjectsRoot => instance.rootOfPooledGameobjects;
 
     [System.Serializable]
     class Pool

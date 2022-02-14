@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using GameEvents;
+using SoftEvents;
 public class TabsSwitcher : MonoBehaviour
 {
     private static TabsSwitcher _innerInstance;
@@ -26,6 +26,21 @@ public class TabsSwitcher : MonoBehaviour
         _playersTabToggle.onValueChanged.AddListener(OnPlayersToggleHandler);        
         _battleTabToggle.onValueChanged.AddListener(OnBattleToggleHandler);
         EventsAgregator.Subscribe<OnStartGenerateCharsEvent>(OnStartGenerateCharsHandler);
+    }
+
+    private void Start()
+    {
+        SetStartCanvas();
+    }
+
+    private void SetStartCanvas()
+    {
+        _addPlayersTabToggle.isOn = true;
+        _addPlayerCanvas.enabled = true;
+        _playersTabToggle.isOn = false;
+        _playersCanvas.enabled = false;
+        _battleTabToggle.isOn = false;
+        _battleCanvas.enabled = false;
     }
 
     public static void SetAddPlayerTabInteractable(bool value)

@@ -3,26 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-
-namespace GameEvents
-{
-    public class OnPlayerWasAddedEvent
-    {
-    }
-
-    public class OnStartGenerateCharsEvent 
-    {
-    }
-
-    public class OnEndBattleEvent 
-    {
-        public bool isDraw;
-        public Player winner;
-        public Player loser;
-    }
-}
-
-
 public static class EventsAgregator 
 {
     public static void Subscribe<TEvent>(System.Action<object, TEvent> eventHandler) 

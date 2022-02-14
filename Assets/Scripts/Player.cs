@@ -7,11 +7,11 @@ public class Player
     private const int MaximumWaveCount = 25;
     private List<Character> _charactersList = new List<Character>();
     public int CharactersCount => _charactersList.Count;
-    public int TournamentWave { get; private set; }
     public string Name { get; set; }
     public int Index { get; set; }
     public int WinCount { get; private set; }
     public int LoseCount { get; private set; }
+    private List<Character> ValidCharactersList { get; set; }
     private int GamesPlayed => WinCount + LoseCount;
     public float WinRate
     {
@@ -34,6 +34,7 @@ public class Player
     {
         Name = name;
         Index = index;
+        ValidCharactersList = new List<Character>();
     }
 
     public void Win() 
@@ -60,52 +61,30 @@ public class Player
         return _charactersList.Find(data => data.Index == index);
     }
     
-    private List<Character> ValidCharactersList { get; set; }
 
     public void RandomSetCurrentCharacter()
     {
-        var wave = 1;
-        ValidCharactersList = _charactersList.FindAll(character => character.WinCount <= wave && !character.IsDroppedOut);
+        var wave = CheckForTournamentWave();
+        ValidCharactersList.Clear();
+        ValidCharactersList.AddRange(_charactersList.FindAll(character => character.WinCount <= wave && !character.IsDroppedOut));
         if (ValidCharactersList.Count != 0)
         {
-            var randVal = Random.Range(0, _charactersList.Count);
-            CurrentCharacter = _charactersList[randVal];
-        }
-        else
-        {
-
-            for (int i = CurrentCharacter.Index + 1; i < CharactersCount; i++)
-            {
-
-                if (!_charactersList[i].IsDroppedOut)
-                {
-                    CurrentCharacter = _charactersList[i];
-                    break;
-                }
-                if (i == CharactersCount - 1 && !IsLoseGame)
-                {
-                    i = 0;
-                }
-            }
-            
+            var randVal = Random.Range(0, ValidCharactersList.Count);
+            CurrentCharacter = ValidCharactersList[randVal];
         }
     }
 
-    public void CheckForTournamentWave() 
+    private int CheckForTournamentWave() 
     {
-        if (IsLoseGame)
-        {
-            return;
-        }
         for (int i = 0; i < MaximumWaveCount; i++)
         {
             var chars = _charactersList.FindAll(charr => !charr.IsDroppedOut && charr.WinCount == i);
             if (chars.Count != 0)
             {
-                TournamentWave = i;
+                return i;
             }
         }
-        TournamentWave = 1;
+        return 0;
     }
 
     public void CheckForLoseGame() 
@@ -114,6 +93,7 @@ public class Player
         if (chars.Count == 0)
         {
             IsLoseGame = true;
+            PlayersHandler.PlayerOutOfGame(this);
         }
     }
 

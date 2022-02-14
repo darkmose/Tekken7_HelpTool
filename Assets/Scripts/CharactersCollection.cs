@@ -16,7 +16,16 @@ public static class CharactersCollection
             _characters.Add(new Character(index++, sprite));
         }
     }
-    
+
+    public static void RemainCharactersInfo() 
+    {
+        Debug.Log("Remain chars:\n");
+        for (int i = 0; i < _characters.Count; i++)
+        {
+            Debug.Log($"{i+1}. {_characters[i].Name}\n");
+        }
+    }
+
     public static Character TakeRandomChar()
     {
         var index = Random.Range(0, CharactersCount);
@@ -26,6 +35,15 @@ public static class CharactersCollection
         Debug.Log($"Result character name: {character.Name}");
 
         return character;
+    }
+
+    public static Character[] TakeRemainingCharacters() 
+    {
+        for (int i = 0; i < _characters.Count; i++)
+        {
+            _characters[i].Index = i;
+        }
+        return _characters.ToArray();
     }
 
 }

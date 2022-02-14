@@ -279,10 +279,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cae175919e4887b42bf70acea5edc1f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  indexText: {fileID: 1815437247273390208}
-  charImage: {fileID: 1815437246590087809}
-  deadImage: {fileID: 181707175009418638}
-  winCountTransform: {fileID: 391394958244355476}
+  _indexText: {fileID: 1815437247273390208}
+  _charImage: {fileID: 1815437246590087809}
+  _deadImage: {fileID: 181707175009418638}
+  _winCountTransform: {fileID: 391394958244355476}
 --- !u!1 &2043199670417072024
 GameObject:
   m_ObjectHideFlags: 0
@@ -345,7 +345,7 @@ MonoBehaviour:
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 4
+  m_ChildAlignment: 5
   m_Spacing: -50
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1

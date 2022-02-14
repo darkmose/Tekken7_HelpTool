@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using GameEvents;
+using SoftEvents;
 
 public class PlayerRegister : MonoBehaviour
 {
@@ -30,6 +30,7 @@ public class PlayerRegister : MonoBehaviour
 
     private void Start()
     {
+        RefreshDefaultName();
         RefreshMaxPlayers();
     }
 
@@ -37,6 +38,7 @@ public class PlayerRegister : MonoBehaviour
     {
         string colorRichText = (_registeredPlayers > MinimumPlayersCount) ? "green" : "red";
         _maxPlayerText.text = $"Зарегистрировано игроков:\n<color={colorRichText}>{_registeredPlayers}</color>/{_maxPlayers}";
+
         if (_registeredPlayers > MinimumPlayersCount)
         {
             TabsSwitcher.SetPlayersTabInteractable(true);
@@ -69,6 +71,11 @@ public class PlayerRegister : MonoBehaviour
             _registerButton.enabled = false;
         }
         RefreshMaxPlayers();
+        RefreshDefaultName();
     }
 
+    private void RefreshDefaultName()
+    {
+        _nameInputField.text = $"Игрок {_registeredPlayers + 1}";
+    }
 }
