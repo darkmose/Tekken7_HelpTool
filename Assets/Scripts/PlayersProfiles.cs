@@ -283,9 +283,8 @@ public class PlayersProfiles : MonoBehaviour
         characterUIElement.SetIndex(character.Index + 1)
             .SetCharImage(character.CharacterSprite)
             .SetDead(character.IsDroppedOut)
-            .ClearWinCount()
-            .AddPerfectWin(character.PerfectCount)
-            .AddWin(character.WinCount - character.PerfectCount); //Кол-во побед включает в себя и победы Perfect
+            .SetPerfectWinCount(character.PerfectCount)
+            .SetWinCount(character.WinCount - character.PerfectCount); //Кол-во побед включает в себя и победы Perfect
     }
 
     private void OnPlayerWasAddedHandler(object sender, OnPlayerWasAddedEvent data)

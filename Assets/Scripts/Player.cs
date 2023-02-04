@@ -93,7 +93,7 @@ public class Player
         if (chars.Count == 0)
         {
             IsLoseGame = true;
-            PlayersHandler.PlayerOutOfGame(this);
+            //PlayersHandler.PlayerOutOfGame(this);
         }
     }
 

@@ -61,7 +61,10 @@ public class BattleHandler : MonoBehaviour
     private void EndBattleHandler(object sender, OnEndBattleEvent data)
     {
         _battlePanel.SetActive(false);
-        data.loser.CheckForLoseGame();
+        if (!data.isDraw)
+        {
+            data.loser.CheckForLoseGame();
+        }
         NextBattle();
     }
 
@@ -156,9 +159,8 @@ public class BattleHandler : MonoBehaviour
         characterUIElement.SetIndex(character.Index + 1)
             .SetCharImage(character.CharacterSprite)
             .SetDead(character.IsDroppedOut)
-            .ClearWinCount()
-            .AddPerfectWin(character.PerfectCount)
-            .AddWin(character.WinCount - character.PerfectCount); //Кол-во побед включает в себя и победы Perfect
+            .SetPerfectWinCount(character.PerfectCount)
+            .SetWinCount(character.WinCount - character.PerfectCount); //Кол-во побед включает в себя и победы Perfect
     }
 
 

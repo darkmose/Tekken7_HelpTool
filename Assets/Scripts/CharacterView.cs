@@ -8,18 +8,10 @@ public class CharacterView : MonoBehaviour
     [SerializeField] private Text _indexText;
     [SerializeField] private Image _charImage;
     [SerializeField] private Image _deadImage;
-    [SerializeField] private Transform _winCountTransform;
-
-    public CharacterView ClearWinCount() 
-    {
-        var count = _winCountTransform.childCount;
-        for (int i = 0; i < count; i++)
-        {
-            _winCountTransform.GetChild(0).gameObject.SetActive(false);
-            _winCountTransform.GetChild(0).SetParent(ObjectPooler.PooledObjectsRoot);
-        }
-        return this;
-    }
+    [SerializeField] private GameObject _simpleWinCount;
+    [SerializeField] private Text _simpleWinCountText;
+    [SerializeField] private GameObject _perfectWinCount;
+    [SerializeField] private Text _perfectWinCountText;
 
     public CharacterView SetIndex(int index) 
     {
@@ -39,26 +31,30 @@ public class CharacterView : MonoBehaviour
         return this;
     }
 
-    public CharacterView AddPerfectWin(int count) 
+    public CharacterView SetPerfectWinCount(int count) 
     {
-        for (int i = 0; i < count; i++)
+        if (count > 0)
         {
-            var v = ObjectPooler.GetPooledGameObject("V");
-            v.transform.SetParent(_winCountTransform);
-            v.GetComponent<Image>().color = Color.yellow;
-            v.transform.localScale = Vector3.one * 1.5f;
+            _perfectWinCount.SetActive(true);
+            _perfectWinCountText.text = count.ToString();
+        }
+        else
+        {
+            _perfectWinCount.SetActive(false);
         }
         return this;
     }
 
-    public CharacterView AddWin(int count) 
+    public CharacterView SetWinCount(int count) 
     {
-        for (int i = 0; i < count; i++)
+        if (count > 0)
         {
-            var v = ObjectPooler.GetPooledGameObject("V");
-            v.transform.SetParent(_winCountTransform);
-            v.GetComponent<Image>().color = Color.green;
-            v.transform.localScale = Vector3.one;
+            _simpleWinCount.SetActive(true);
+            _simpleWinCountText.text = count.ToString();
+        }
+        else
+        {
+            _simpleWinCount.SetActive(false);
         }
         return this;
     }
