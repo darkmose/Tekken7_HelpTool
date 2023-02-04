@@ -244,7 +244,7 @@ public class PlayersProfiles : MonoBehaviour
             element.transform.localScale = Vector3.one;
             element.name = character.Name;
 
-            if (element.TryGetComponent(out CharacterUIElement charsElementHandler))
+            if (element.TryGetComponent(out CharacterView charsElementHandler))
             {
                 RefreshUIElement(character, charsElementHandler);
             }
@@ -278,7 +278,7 @@ public class PlayersProfiles : MonoBehaviour
         }
     }
 
-    private void RefreshUIElement(Character character, CharacterUIElement characterUIElement)
+    private void RefreshUIElement(Character character, CharacterView characterUIElement)
     {
         characterUIElement.SetIndex(character.Index + 1)
             .SetCharImage(character.CharacterSprite)

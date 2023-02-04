@@ -12,6 +12,7 @@ public class Character
     public bool IsDroppedOut { get; set; }
     public int WinCount { get; set; }
     public int PerfectCount { get; set; }
+
     public Character(int index, Sprite characterSprite)
     {
         Index = index;

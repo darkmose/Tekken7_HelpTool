@@ -76,6 +76,6 @@ public class PlayerRegister : MonoBehaviour
 
     private void RefreshDefaultName()
     {
-        _nameInputField.text = $"Игрок {_registeredPlayers + 1}";
+        _nameInputField.text = $"Боец {_registeredPlayers + 1}";
     }
 }

@@ -7,6 +7,7 @@ public static class CharactersCollection
     private static List<Character> _characters = new List<Character>();
     public static int CharactersCount => _characters.Count;
     public static List<Character> Characters => _characters;
+
     public static void PrepareCharacterCollection() 
     {
         var sprites = Resources.LoadAll<Sprite>("Sprites");

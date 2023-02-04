@@ -16,8 +16,8 @@ public class BattleHandler : MonoBehaviour
     [SerializeField] private Button _secondPlayerWin;
     [SerializeField] private Text _firstPlayerName;
     [SerializeField] private Text _secondPlayerName;
-    [SerializeField] private CharacterUIElement _firstPlayerElement;
-    [SerializeField] private CharacterUIElement _secondPlayerElement;
+    [SerializeField] private CharacterView _firstPlayerElement;
+    [SerializeField] private CharacterView _secondPlayerElement;
     [SerializeField] private Button _startBattleButton;
     [SerializeField] private Button _nextBattleButton;
     [SerializeField] private GameObject _battlePanel;
@@ -151,7 +151,7 @@ public class BattleHandler : MonoBehaviour
         RefreshUIElement(_secondPlayerElement, _secondPlayer.CurrentCharacter);
     }
 
-    private void RefreshUIElement(CharacterUIElement characterUIElement, Character character) 
+    private void RefreshUIElement(CharacterView characterUIElement, Character character) 
     {
         characterUIElement.SetIndex(character.Index + 1)
             .SetCharImage(character.CharacterSprite)

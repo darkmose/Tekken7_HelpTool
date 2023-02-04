@@ -63,7 +63,6 @@ public class AudioManager : MonoBehaviour
         instance.musicSource.mute = mute;
     }
 
-
     private Dictionary<string, AudioClip> InitializeSounds()
     {
         AudioClip[] audioClips = Resources.LoadAll<AudioClip>("AudioSystem/Audio");
@@ -112,9 +111,8 @@ public class AudioManager : MonoBehaviour
         {
             Debug.Log($"Sound {sound} doesn't exist!");
         }
-
-
     }
+
     static public void PlayMusic(string music) 
     {        
         if (instance._musics.ContainsKey(music))
@@ -127,8 +125,4 @@ public class AudioManager : MonoBehaviour
             Debug.Log($"Music {music} doesn't exist!");
         }
     }
-
-
-
-
 }

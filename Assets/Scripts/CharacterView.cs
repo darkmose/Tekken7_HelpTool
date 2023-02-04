@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class CharacterUIElement : MonoBehaviour
+public class CharacterView : MonoBehaviour
 {
     [SerializeField] private Text _indexText;
     [SerializeField] private Image _charImage;
     [SerializeField] private Image _deadImage;
     [SerializeField] private Transform _winCountTransform;
 
-    public CharacterUIElement ClearWinCount() 
+    public CharacterView ClearWinCount() 
     {
         var count = _winCountTransform.childCount;
         for (int i = 0; i < count; i++)
@@ -21,25 +21,25 @@ public class CharacterUIElement : MonoBehaviour
         return this;
     }
 
-    public CharacterUIElement SetIndex(int index) 
+    public CharacterView SetIndex(int index) 
     {
         _indexText.text = index.ToString() + ".";
         return this;
     }
 
-    public CharacterUIElement SetCharImage(Sprite sprite) 
+    public CharacterView SetCharImage(Sprite sprite) 
     {
         _charImage.sprite = sprite;
         return this;
     }
 
-    public CharacterUIElement SetDead(bool isDead) 
+    public CharacterView SetDead(bool isDead) 
     {
         _deadImage.enabled = isDead;
         return this;
     }
 
-    public CharacterUIElement AddPerfectWin(int count) 
+    public CharacterView AddPerfectWin(int count) 
     {
         for (int i = 0; i < count; i++)
         {
@@ -51,7 +51,7 @@ public class CharacterUIElement : MonoBehaviour
         return this;
     }
 
-    public CharacterUIElement AddWin(int count) 
+    public CharacterView AddWin(int count) 
     {
         for (int i = 0; i < count; i++)
         {
