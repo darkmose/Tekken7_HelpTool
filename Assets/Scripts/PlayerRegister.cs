@@ -57,6 +57,7 @@ public class PlayerRegister : MonoBehaviour
         int index = _registeredPlayers++;
         var player = new Player(name, index);
         PlayersHandler.Players.Add(player);
+        PlayersHandler.PlayersInGame.Add(player);
         EventsAgregator.Post<OnPlayerWasAddedEvent>(this, _playerWasAddedEvent);
     }
 

@@ -40,6 +40,7 @@ public class Player
     public void Win() 
     {
         WinCount++;
+        CurrentCharacter.WinCount++;
     }
 
     public void Lose() 
@@ -93,7 +94,7 @@ public class Player
         if (chars.Count == 0)
         {
             IsLoseGame = true;
-            //PlayersHandler.PlayerOutOfGame(this);
+            PlayersHandler.PlayerOutOfGame(this);
         }
     }
 
