@@ -27,9 +27,9 @@ public class Player
             }
         }
     }
-    private int LastIndex => _charactersList.Count - 1;
     public Character CurrentCharacter { get; private set; }
     public bool IsLoseGame;
+
     public Player(string name, int index) 
     {
         Name = name;
@@ -37,31 +37,37 @@ public class Player
         ValidCharactersList = new List<Character>();
     }
 
-    public void Win() 
+    public void Win(bool isPerfect) 
     {
         WinCount++;
         CurrentCharacter.WinCount++;
+        if (isPerfect)
+        {
+            CurrentCharacter.PerfectCount++;
+        }
     }
 
-    public void Lose() 
+    public bool LoseAndCheckGameOver() 
     {
         LoseCount++;
+        CurrentCharacter.IsDroppedOut = true;
+        return CheckForLoseGame();
     }
 
-    public void AddCharacter(Character character) 
+    public void AddCharacter(Character character, int index) 
     {
         _charactersList.Add(character);
-        character.Index = LastIndex;
-        if (LastIndex == 0)
+        character.Index = index;
+        if (index == 0)
         {
             CurrentCharacter = character;
         }
     }
+
     public Character GetCharacterOfIndex(int index) 
     {
         return _charactersList.Find(data => data.Index == index);
-    }
-    
+    }   
 
     public void RandomSetCurrentCharacter()
     {
@@ -88,7 +94,7 @@ public class Player
         return 0;
     }
 
-    public void CheckForLoseGame() 
+    private bool CheckForLoseGame() 
     {
         var chars = _charactersList.FindAll(data=>!data.IsDroppedOut);
         if (chars.Count == 0)
@@ -96,21 +102,6 @@ public class Player
             IsLoseGame = true;
             PlayersHandler.PlayerOutOfGame(this);
         }
-    }
-
-    public void NextCharacter() 
-    {
-        if (CurrentCharacter.Index < CharactersCount - 1)
-        {
-            CurrentCharacter = _charactersList[ CurrentCharacter.Index + 1];
-        }
-    }
-
-    public void PrevCharacter() 
-    {
-        if (CurrentCharacter.Index > 0)
-        {
-            CurrentCharacter = _charactersList[ CurrentCharacter.Index - 1];
-        }
+        return IsLoseGame;
     }
 }

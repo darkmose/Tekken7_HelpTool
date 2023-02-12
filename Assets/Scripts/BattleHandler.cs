@@ -9,9 +9,6 @@ using System.Text;
 public class BattleHandler : MonoBehaviour
 {
     private const int MinimumPlayersCount = 2;
-    private const int PlayersTabIndex = 1;
-    [SerializeField] private Toggle _battleTabButton;
-    [SerializeField] private Canvas _battleCanvas;
     [SerializeField] private Button _firstPlayerWin;
     [SerializeField] private Button _secondPlayerWin;
     [SerializeField] private Text _firstPlayerName;
@@ -19,7 +16,6 @@ public class BattleHandler : MonoBehaviour
     [SerializeField] private CharacterView _firstPlayerElement;
     [SerializeField] private CharacterView _secondPlayerElement;
     [SerializeField] private Button _startBattleButton;
-    [SerializeField] private Button _nextBattleButton;
     [SerializeField] private GameObject _battlePanel;
     [SerializeField] private Button _firstPerfectButton;
     [SerializeField] private Button _secondPerfectButton;
@@ -27,22 +23,20 @@ public class BattleHandler : MonoBehaviour
     [SerializeField] private Text _leaderBoardText;
     [SerializeField] private GameObject _leaderBoardPanel;
     [SerializeField] private Button _leaderBoardCloseButton;
+    private List<Player> _playersInGame = new List<Player>();
     private Player _firstPlayer;
     private Player _secondPlayer;
-
     private OnEndBattleEvent _onEndBattleEvent = new OnEndBattleEvent();
-    private OnEndGameEvent _onEndGameEvent = new OnEndGameEvent();
-
+    private OnEndTournamentEvent _onEndTournamentEvent = new OnEndTournamentEvent();
     private int _battleIndex = 0;
-    private bool isFirstCircle = true;
+    private bool _isFirstCircle = true;
+    private int ActivePlayersCount => _playersInGame.Count;
 
     private void Awake()
     {
-        _battleTabButton.onValueChanged.AddListener(OnBattleToggleClickHandler);
         _firstPlayerWin.onClick.AddListener(OnFirstPlayerWinHandler);
         _secondPlayerWin.onClick.AddListener(OnSecondPlayerWinHandler);
         _startBattleButton.onClick.AddListener(OnStartBattleClickHandler);
-        _nextBattleButton.onClick.AddListener(OnNextBattleButtonClickHandler);
         _drawWinButton.onClick.AddListener(OnDrawWinButton);
         _firstPerfectButton.onClick.AddListener(OnFirstPerfectButtonClickHandler);
         _secondPerfectButton.onClick.AddListener(OnSecondPerfectButtonClickHandler);
@@ -50,77 +44,111 @@ public class BattleHandler : MonoBehaviour
         EventsAgregator.Subscribe<OnEndBattleEvent>(EndBattleHandler);
     }
 
-    private void OnLeaderboardCloseButtonClickHandler()
+    private void PreparePlayersInGame()
     {
-        TabsSwitcher.SetBattleTabInteractable(false);
-        TabsSwitcher.SwitchTab(1);
-        _leaderBoardPanel.SetActive(false);
-    }
+        _playersInGame.Clear();
 
-    private void EndBattleHandler(object sender, OnEndBattleEvent data)
-    {
-        _battlePanel.SetActive(false);
-        if (!data.isDraw)
+        foreach (var player in PlayersHandler.Players)
         {
-            data.loser.CheckForLoseGame();
+            _playersInGame.Add(player);
         }
-        NextBattle();
-    }
-
-    private void OnSecondPerfectButtonClickHandler()
-    {
-        OnSecondPlayerWinHandler();
-        _secondPlayer.CurrentCharacter.PerfectCount++;
-    }
-
-    private void OnFirstPerfectButtonClickHandler()
-    {
-        OnFirstPlayerWinHandler();
-        _firstPlayer.CurrentCharacter.PerfectCount++;
-    }
-
-    private void OnDrawWinButton() //Draw - ничья
-    {
-        _firstPlayer.Win();
-        _secondPlayer.Win();
-        _onEndBattleEvent.winner = _firstPlayer;
-        _onEndBattleEvent.loser = _secondPlayer;
-        _onEndBattleEvent.isDraw = true;
-        EventsAgregator.Post<OnEndBattleEvent>(this, _onEndBattleEvent);
-    }
-
-    private void Start()
-    {
-        _nextBattleButton.gameObject.SetActive(false);
-    }
-
-    private void OnNextBattleButtonClickHandler()
-    {
-        NextBattle();
     }
 
     private void OnStartBattleClickHandler()
     {
-        if (PlayersHandler.CheckAllPlayersInGameWithCharacters())
+        if (PlayersHandler.CheckAllPlayersWithCharacters())
         {
+            PreparePlayersInGame();
             _battlePanel.SetActive(true);
-            if (isFirstCircle)
-            {
-                PrepareOneByOnePlayers();
-            }
+            PrepareOneByOnePlayers();
             PrepareCharsToFight();
             RefreshBattleWindow();
             _startBattleButton.gameObject.SetActive(false);
         }
         else
         {
-            TabsSwitcher.SwitchTab(PlayersTabIndex);
+            TabsSwitcher.SwitchTab(TabsSwitcher.Tab.Players);
         }
+    }
+
+    private void OnLeaderboardCloseButtonClickHandler()
+    {
+        TabsSwitcher.SetBattleTabInteractable(false);
+        _leaderBoardPanel.SetActive(false);
+        TabsSwitcher.SwitchTab(TabsSwitcher.Tab.Players);
+    }
+
+    private void EndBattleHandler(object sender, OnEndBattleEvent data)
+    {
+        _battlePanel.SetActive(false);
+        CheckTournamentEnd();
+        NextBattle();
+    }
+
+    private void ShowLeaderBoard(Player winner)
+    {
+        var result = new StringBuilder();
+        result.Append("1. " + winner.Name + "\n");
+        int i = 2;
+        foreach (var player in PlayersHandler.LosePlayers)
+        {
+            result.Append((i++).ToString() + ". " + player.Name + "\n");
+        }
+
+        _leaderBoardText.text = result.ToString();
+        _leaderBoardPanel.SetActive(true);
+    }
+
+    private void OnFirstPlayerWinHandler()
+    {
+        _firstPlayer.Win(false);
+        if (_secondPlayer.LoseAndCheckGameOver())
+        {
+            _playersInGame.Remove(_secondPlayer);
+        }
+        EventsAgregator.Post<OnEndBattleEvent>(this, _onEndBattleEvent);
+    }
+
+    private void OnSecondPlayerWinHandler()
+    {
+        _secondPlayer.Win(false);
+        if (_firstPlayer.LoseAndCheckGameOver())
+        {
+            _playersInGame.Remove(_firstPlayer);
+        }
+        EventsAgregator.Post<OnEndBattleEvent>(this, _onEndBattleEvent);
+    }
+
+    private void OnSecondPerfectButtonClickHandler()
+    {
+        _secondPlayer.Win(true);
+        if (_firstPlayer.LoseAndCheckGameOver())
+        {
+            _playersInGame.Remove(_firstPlayer);
+        }
+        EventsAgregator.Post<OnEndBattleEvent>(this, _onEndBattleEvent);
+    }
+
+    private void OnFirstPerfectButtonClickHandler()
+    {
+        _firstPlayer.Win(true);
+        if (_secondPlayer.LoseAndCheckGameOver())
+        {
+            _playersInGame.Remove(_secondPlayer);
+        }
+        EventsAgregator.Post<OnEndBattleEvent>(this, _onEndBattleEvent);
+    }
+
+    private void OnDrawWinButton()
+    {
+        _firstPlayer.Win(false);
+        _secondPlayer.Win(false);
+        EventsAgregator.Post<OnEndBattleEvent>(this, _onEndBattleEvent);
     }
 
     private void NextBattle() 
     {                    
-        if (isFirstCircle && PlayersHandler.PlayersInGameCount > 2)
+        if (_isFirstCircle)
         {
             PrepareOneByOnePlayers();
             PrepareCharsToFight();
@@ -134,7 +162,6 @@ public class BattleHandler : MonoBehaviour
             RefreshBattleWindow();
             _battlePanel.SetActive(true);
         }
-
     }
 
     private void PrepareCharsToFight() 
@@ -160,101 +187,56 @@ public class BattleHandler : MonoBehaviour
             .SetWinCount(character.WinCount - character.PerfectCount); //Кол-во побед включает в себя и победы Perfect
     }
 
-
-    private void OnFirstPlayerWinHandler()
-    {
-        _firstPlayer.CurrentCharacter.WinCount++;
-        _firstPlayer.Win();
-        _secondPlayer.Lose();
-        _secondPlayer.CurrentCharacter.IsDroppedOut = true;
-        _onEndBattleEvent.winner = _firstPlayer;
-        _onEndBattleEvent.loser = _secondPlayer;
-        EventsAgregator.Post<OnEndBattleEvent>(this, _onEndBattleEvent);
-    }
-
-
-
-    private void OnSecondPlayerWinHandler()
-    {
-        _secondPlayer.CurrentCharacter.WinCount++;
-        _secondPlayer.Win();
-        _firstPlayer.Lose();
-        _firstPlayer.CurrentCharacter.IsDroppedOut = true;
-        _onEndBattleEvent.winner = _secondPlayer;
-        _onEndBattleEvent.loser = _firstPlayer;
-        EventsAgregator.Post<OnEndBattleEvent>(this, _onEndBattleEvent);
-    }
-
-
-    private void OnBattleToggleClickHandler(bool value)
-    {
-        _battleCanvas.enabled = value;
-    }
-
     private void PrepareOneByOnePlayers() 
     {
-        if (PlayersHandler.PlayersInGameCount > 1)
+        if (_battleIndex >= ActivePlayersCount)
         {
-            _firstPlayer = PlayersHandler.GetPlayerInGameOfIndex(_battleIndex);
-            if (_firstPlayer.Index < PlayersHandler.PlayersInGameCount - 1)
-            {
-                _secondPlayer = PlayersHandler.GetPlayerInGameOfIndex(_firstPlayer.Index + 1);
-                _battleIndex++;
-            }
-            else
-            {
-                _secondPlayer = PlayersHandler.GetFirstPlayerInGame();
-                isFirstCircle = false;
-                _battleIndex = 0;
-            }
+            _battleIndex = 0;
+            _isFirstCircle = false;
+            PrepareOneThroughOnePlayers();
+            return;
+        }
+        _firstPlayer = _playersInGame[_battleIndex];
+        if (_battleIndex < ActivePlayersCount - 1)
+        {
+            _secondPlayer = _playersInGame[_battleIndex + 1];
+            _battleIndex++;
         }
         else
         {
-            Debug.Log($"Победитель: {PlayersHandler.GetPlayerInGameOfIndex(0).Name}");
-            _onEndGameEvent.Winner = PlayersHandler.GetPlayerInGameOfIndex(0);
-            ShowLeaderBoard(_onEndGameEvent.Winner);
-            EventsAgregator.Post<OnEndGameEvent>(this, _onEndGameEvent);
-        }
-    }
-
-    private void ShowLeaderBoard(Player winner) 
-    {
-        var result = new StringBuilder();
-        result.Append("1. " + winner.Name +"\n");
-        int i = 2;
-        foreach (var player in PlayersHandler.LosePlayers)
-        {
-            result.Append((i++).ToString() + ". " + player.Name + "\n");
-        }
-
-        _leaderBoardText.text = result.ToString();
-        _leaderBoardPanel.SetActive(true);
+            _secondPlayer = _playersInGame[0];
+            _isFirstCircle = false;
+            _battleIndex = 0;
+        }        
     }
 
     private void PrepareOneThroughOnePlayers() 
     {
-        if (PlayersHandler.PlayersInGameCount > MinimumPlayersCount)
+        if (ActivePlayersCount > MinimumPlayersCount)
         {
-            _firstPlayer = PlayersHandler.GetPlayerInGameOfIndex(_battleIndex);
-            if (_firstPlayer.Index < PlayersHandler.PlayersInGameCount - 2)
+            if (_battleIndex < ActivePlayersCount - 2)
             {
-                _secondPlayer = PlayersHandler.GetPlayerInGameOfIndex(_firstPlayer.Index + 2);
+                _firstPlayer = _playersInGame[_battleIndex];
+                _secondPlayer = _playersInGame[_firstPlayer.Index + 2];
                 _battleIndex++;
+                return;
             }
-            else
-            {
-                isFirstCircle = true;
-                _battleIndex = 0;
-                PrepareOneByOnePlayers();
-            }
-        }
-        else
-        {
-            _battleIndex = 0;
-            isFirstCircle = true;
-            PrepareOneByOnePlayers();
         }
 
+        _battleIndex = 0;
+        _isFirstCircle = true;
+        PrepareOneByOnePlayers();        
     }
 
+    private void CheckTournamentEnd()
+    {
+        if (ActivePlayersCount <= 1)
+        {
+            var winner = _playersInGame[0];
+            Debug.Log($"Победитель: {winner.Name}");
+            _onEndTournamentEvent.Winner = winner;
+            ShowLeaderBoard(winner);
+            EventsAgregator.Post<OnEndTournamentEvent>(this, _onEndTournamentEvent);
+        }
+    }
 }

@@ -22,13 +22,13 @@ public class PlayersProfiles : MonoBehaviour
     [SerializeField] private Button _upArrowButton;
     [SerializeField] private Button _downArrowButton;
     [SerializeField] private Image _characterCheckoutImage;
-
     private int _charactersCount = 0;
     private Player _currentPlayer;
     private OnStartGenerateCharsEvent _onStartGenerateChars = new OnStartGenerateCharsEvent();
     private Character[] _remainingCharacters;
     private Character _currentRemainCharacter;
     public static int CharactersPerPlayer => innerInstance._charactersCount / PlayerRegister.PlayersRegistered;
+
     private void Awake()
     {
         if (innerInstance == null)
@@ -38,14 +38,13 @@ public class PlayersProfiles : MonoBehaviour
         _currentPlayer = new Player("Unknown", -1);
         EventsAgregator.Subscribe<OnPlayerWasAddedEvent>(OnPlayerWasAddedHandler);
         EventsAgregator.Subscribe<OnEndBattleEvent>(EndBattleHandler);
-        _leftArrowButton.onClick.AddListener(OnLeftArrowButtonClickHandler);
-        _rightArrowButton.onClick.AddListener(OnRightArrowButtonClickHandler);
+        _leftArrowButton.onClick.AddListener(PrevPlayer);
+        _rightArrowButton.onClick.AddListener(NextPlayer);
         _generateCharactersButton.onClick.AddListener(OnGenerateCharactersButtonClickHandler);
-        _upArrowButton.onClick.AddListener(OnUpArrowButtonClickHandler);
-        _downArrowButton.onClick.AddListener(OnDownArrowButtonClickHandler);
+        _upArrowButton.onClick.AddListener(PrevRemainCharacter);
+        _downArrowButton.onClick.AddListener(NextRemainCharacter);
         _generateCharactersButton.gameObject.SetActive(false);
     }
-
 
     private void Start()
     {
@@ -187,26 +186,6 @@ public class PlayersProfiles : MonoBehaviour
         }
     }
 
-    private void OnLeftArrowButtonClickHandler()
-    {
-        PrevPlayer();
-    }
-
-    private void OnRightArrowButtonClickHandler()
-    {
-        NextPlayer();
-    }
-
-    private void OnDownArrowButtonClickHandler()
-    {
-        NextRemainCharacter();
-    }
-
-    private void OnUpArrowButtonClickHandler()
-    {
-        PrevRemainCharacter();
-    }
-
     private void PrepareCharactersCount()
     {
         _charactersCount = CharactersCollection.CharactersCount;
@@ -264,7 +243,7 @@ public class PlayersProfiles : MonoBehaviour
             for (int i = 0; i < CharactersPerPlayer; i++)
             {
                 var character = CharactersCollection.TakeRandomChar();
-                _currentPlayer.AddCharacter(character);
+                _currentPlayer.AddCharacter(character, i);
             }
             RefreshScrollview();
             _generateCharactersButton.gameObject.SetActive(false);
@@ -289,7 +268,7 @@ public class PlayersProfiles : MonoBehaviour
 
     private void OnPlayerWasAddedHandler(object sender, OnPlayerWasAddedEvent data)
     {
-        var player = PlayersHandler.GetFirstPlayer();
+        var player = PlayersHandler.Players[0];
         _currentPlayer = player;
         RefreshStats();
 

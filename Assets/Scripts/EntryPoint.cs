@@ -8,10 +8,6 @@ public class EntryPoint : MonoBehaviour
     {
         CharactersCollection.PrepareCharacterCollection();
     }
-    void Start()
-    {
-        
-    }
 
     private void Update()
     {

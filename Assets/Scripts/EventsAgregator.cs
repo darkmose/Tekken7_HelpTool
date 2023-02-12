@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
 public static class EventsAgregator 
 {
     public static void Subscribe<TEvent>(System.Action<object, TEvent> eventHandler) 

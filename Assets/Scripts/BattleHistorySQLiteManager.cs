@@ -152,7 +152,7 @@ namespace Database
 
 		public void InsertPlayer(string tournamentID, string playerID, string winCount, string loseCount, string winRate, string name)
         {
-			_sqlString = "INSERT OR REPLACE INTO " + SQL_TOURNAMENT_TABLE_NAME
+			_sqlString = "INSERT OR REPLACE INTO " + SQL_PLAYER_TABLE_NAME
 				+ " ("
 				+ COL_PLAYER_ID + ","
 				+ COL_TOURNAMENT_ID + ","
@@ -173,7 +173,7 @@ namespace Database
 
 		public void InsertCharacter(string tournamentID, string playerID, string characterID, string isDead, string winCount, string perfectCount, string characterName)
         {
-			_sqlString = "INSERT OR REPLACE INTO " + SQL_TOURNAMENT_TABLE_NAME
+			_sqlString = "INSERT OR REPLACE INTO " + SQL_CHARACTER_TABLE_NAME
 			+ " ("
 			+ COL_CHARACTER_ID + ","
 			+ COL_TOURNAMENT_ID + ","
@@ -199,21 +199,6 @@ namespace Database
 			int lastIndex = 0;
 			_connection.Open();
 			_command.CommandText = $"SELECT COUNT(*) FROM {SQL_TOURNAMENT_TABLE_NAME}";
-			_reader = _command.ExecuteReader();
-			while (_reader.Read())
-			{
-				lastIndex = _reader.GetInt16(0) - 1;
-			}
-			_reader.Close();
-			_connection.Close();
-			return lastIndex;
-		}
-
-		public int GetLastPlayerIndex(int tournamentID)
-        {
-			int lastIndex = 0;
-			_connection.Open();
-			_command.CommandText = $"SELECT COUNT(*) FROM {SQL_PLAYER_TABLE_NAME} WHERE {COL_TOURNAMENT_ID} = {tournamentID}";
 			_reader = _command.ExecuteReader();
 			while (_reader.Read())
 			{

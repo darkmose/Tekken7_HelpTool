@@ -1,4 +1,5 @@
 ﻿using Database;
+using SoftEvents;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -23,6 +24,45 @@ public class BattleHistoryController : MonoBehaviour
     {
         InitTournamentListViewCallbacks();
         InitTournamentViewCallbacks();
+        EventsAgregator.Subscribe<OnEndTournamentEvent>(OnTournamentEndHandler);
+    }
+
+    private void OnTournamentEndHandler(object sender, OnEndTournamentEvent data)
+    {
+        var tournamentData = new TournamentDataDescriptor();
+        tournamentData.Date = DateTime.Now.Date.ToShortTimeString();
+        tournamentData.IsTournamentOver = true;
+        var tournamentID = _battleHistorySQLiteManager.GetLastTournamentIndex() + 1;
+        tournamentData.TournamentID = tournamentID;
+        tournamentData.Winner = data.Winner.Name;
+
+        tournamentData.PlayerDatas = new List<PlayerDataDescriptor>();
+        foreach (var player in PlayersHandler.Players)
+        {
+            var playerData = new PlayerDataDescriptor();
+            playerData.PlayerID = player.Index;
+            playerData.PlayerName = player.Name;
+            playerData.WinCount = player.WinCount;
+            playerData.LoseCount = player.LoseCount;
+            playerData.WinRate = player.WinRate;
+            playerData.CharactersDatas = new List<CharacterDataDescriptor>();
+
+            for (int i = 0; i < player.CharactersCount; i++)
+            {
+                var character = player.GetCharacterOfIndex(i);
+                var characterData = new CharacterDataDescriptor();
+                characterData.CharacterID = character.Index;
+                characterData.CharacterName = character.Name;
+                characterData.isDead = character.IsDroppedOut;
+                characterData.WinCount = character.WinCount;
+                characterData.PerfectCount = character.PerfectCount;
+                playerData.CharactersDatas.Add(characterData);
+            }
+
+            tournamentData.PlayerDatas.Add(playerData);
+        }
+
+        SaveTournament(tournamentData);
     }
 
     private void InitTournamentViewCallbacks()
@@ -93,7 +133,7 @@ public class BattleHistoryController : MonoBehaviour
         LoadTournamentsRange(startID, lastID);
     }
 
-    public void SaveTournament(TournamentDataDescriptor tournamentDataDescriptor)
+    private void SaveTournament(TournamentDataDescriptor tournamentDataDescriptor)
     {
         var tournamentID = tournamentDataDescriptor.TournamentID.ToString();
         var date = tournamentDataDescriptor.Date;
@@ -134,7 +174,6 @@ public class BattleHistoryController : MonoBehaviour
     {
         var tournamentsDatas = _battleHistorySQLiteManager.LoadTournamentsRange(startID, lastID);
         var lastTournamentsIndex = _battleHistorySQLiteManager.GetLastTournamentIndex();
-        Debug.Log($"last tournament index is: {lastTournamentsIndex}");
         var canMoveNext = lastID < lastTournamentsIndex;
         var canMovePrev = startID >= QUERY_RANGE_COUNT;
         _tournamentsListView.PrepareList(tournamentsDatas);

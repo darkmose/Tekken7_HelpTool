@@ -6,15 +6,25 @@ using UnityEngine.UI;
 using SoftEvents;
 public class TabsSwitcher : MonoBehaviour
 {
+    public enum Tab
+    {
+        Register,
+        Players,
+        Battle,
+        History
+    }
+
     private static TabsSwitcher _innerInstance;
 
     [SerializeField] private Toggle _addPlayersTabToggle;
     [SerializeField] private Toggle _playersTabToggle;
     [SerializeField] private Toggle _battleTabToggle;
+    [SerializeField] private Toggle _historyTabToggle;
 
     [SerializeField] private Canvas _addPlayerCanvas;
     [SerializeField] private Canvas _playersCanvas;
     [SerializeField] private Canvas _battleCanvas;
+    [SerializeField] private Canvas _historyCanvas;
 
     private void Awake()
     {
@@ -25,6 +35,7 @@ public class TabsSwitcher : MonoBehaviour
         _addPlayersTabToggle.onValueChanged.AddListener(OnAddPlayersToggleHandler);        
         _playersTabToggle.onValueChanged.AddListener(OnPlayersToggleHandler);        
         _battleTabToggle.onValueChanged.AddListener(OnBattleToggleHandler);
+        _historyTabToggle.onValueChanged.AddListener(OnHistoryToggleHandler);
         EventsAgregator.Subscribe<OnStartGenerateCharsEvent>(OnStartGenerateCharsHandler);
     }
 
@@ -41,6 +52,8 @@ public class TabsSwitcher : MonoBehaviour
         _playersCanvas.enabled = false;
         _battleTabToggle.isOn = false;
         _battleCanvas.enabled = false;
+        _historyTabToggle.isOn = false;
+        _historyCanvas.enabled = false;
     }
 
     public static void SetAddPlayerTabInteractable(bool value)
@@ -62,7 +75,6 @@ public class TabsSwitcher : MonoBehaviour
         _innerInstance._battleTabToggle.image.color = color;
     }
 
-
     private void OnStartGenerateCharsHandler(object sender, OnStartGenerateCharsEvent data)
     {
         SetAddPlayerTabInteractable(false);
@@ -83,23 +95,33 @@ public class TabsSwitcher : MonoBehaviour
         _addPlayerCanvas.enabled = value;
     }
 
-    public static void SwitchTab(int index)
+    private void OnHistoryToggleHandler(bool value)
     {
-        if (index >= 0 && index < 3)
+        _historyCanvas.enabled = value;
+        if (value)
         {
-            switch (index)
-            {
-                case 0:
-                    _innerInstance._addPlayersTabToggle.isOn = true;
-                    break;
-                case 1:
-                    _innerInstance._playersTabToggle.isOn = true;
-                    break;
-                case 2:
-                    _innerInstance._battleTabToggle.isOn = true;
-                    break;
-            }
+            var historyController = _historyCanvas.GetComponentInChildren<BattleHistoryController>();
+            historyController.LoadTournamentsList();
         }
+    }
+
+    public static void SwitchTab(Tab tab)
+    {
+        switch (tab)
+        {
+            case Tab.Register:
+                _innerInstance._addPlayersTabToggle.isOn = true;
+                break;
+            case Tab.Players:
+                _innerInstance._playersTabToggle.isOn = true;
+                break;
+            case Tab.Battle:
+                _innerInstance._battleTabToggle.isOn = true;
+                break;
+            case Tab.History:
+                _innerInstance._historyTabToggle.isOn = true;
+                break;
+        }        
     }
 
 

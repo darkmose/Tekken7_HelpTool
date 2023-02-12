@@ -14,12 +14,9 @@ namespace SoftEvents
 
     public class OnEndBattleEvent
     {
-        public bool isDraw;
-        public Player winner;
-        public Player loser;
     }
 
-    public class OnEndGameEvent 
+    public class OnEndTournamentEvent 
     {
         public Player Winner;
     }
